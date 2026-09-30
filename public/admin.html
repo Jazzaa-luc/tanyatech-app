@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TanyaTech — Admin</title>
+<link rel="icon" href="/assets/logo.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="plate login-card" id="loginCard">
+    <img src="/assets/logo.jpeg" alt="TanyaTech" style="width:52px;height:52px;object-fit:contain;margin:0 auto 14px;">
+    <h3 style="font-size:1.15rem;margin-bottom:6px;">Admin dashboard</h3>
+    <p class="hint" style="margin-bottom:18px;">Sign in to manage products, orders, and custom requests.</p>
+    <input class="field" style="width:100%;text-align:center;" id="pinInput" type="password" placeholder="Admin password" onkeydown="if(event.key==='Enter')login()">
+    <p id="loginError" class="hide" style="color:var(--danger);font-size:.8rem;margin-top:8px;">Incorrect password.</p>
+    <button class="btn accent block" id="loginBtn" style="margin-top:16px;" onclick="login()">Sign in</button>
+    <a class="admin-entry" href="/" style="display:block;margin-top:14px;">← Back to storefront</a>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="adminApp" class="hide">
+  <div class="admin-top">
+    <div class="wrap admin-bar">
+      <div class="brand" style="font-size:1rem;">
+        <img class="logo" src="/assets/logo.jpeg" alt="TanyaTech" style="width:26px;height:26px;">
+        TanyaTech <span class="tag mono">ADMIN</span>
+      </div>
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="orders" onclick="switchAdminTab('orders')">Orders <span class="badge hide" id="ordersBadge">0</span></button>
+        <button class="admin-tab" data-tab="custom" onclick="switchAdminTab('custom')">Custom requests <span class="badge hide" id="customBadge">0</span></button>
+        <button class="admin-tab" data-tab="products" onclick="switchAdminTab('products')">Products</button>
+      </div>
+      <div class="bar-right">
+        <button class="icon-btn theme-toggle" id="themeBtn" title="Toggle theme"></button>
+        <button class="btn ghost small" onclick="logout()">Sign out</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-main wrap">
+
+    <!-- ORDERS -->
+    <div class="admin-panel active" id="panelOrders">
+      <div class="section-head"><h2 style="font-size:1.3rem;">Customer orders</h2></div>
+      <div class="status-tabs" id="orderStatusTabs">
+        <button class="status-chip active" data-status="all" onclick="setOrderFilter('all')">All</button>
+        <button class="status-chip" data-status="pending" onclick="setOrderFilter('pending')">Pending</button>
+        <button class="status-chip" data-status="approved" onclick="setOrderFilter('approved')">Approved</button>
+        <button class="status-chip" data-status="rejected" onclick="setOrderFilter('rejected')">Rejected</button>
+      </div>
+      <div id="ordersList"><div class="spinner-inline"></div></div>
+    </div>
+
+    <!-- CUSTOM REQUESTS -->
+    <div class="admin-panel" id="panelCustom">
+      <div class="section-head"><h2 style="font-size:1.3rem;">Custom print requests</h2></div>
+      <div id="customList"><div class="spinner-inline"></div></div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div class="admin-panel" id="panelProducts">
+      <div class="section-head">
+        <h2 style="font-size:1.3rem;">Products</h2>
+        <button class="btn accent small" onclick="openProductModal()">+ Add product</button>
+      </div>
+      <div class="plate" style="overflow-x:auto;">
+        <table class="admin-table">
+          <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Colors</th><th>Price</th><th></th></tr></thead>
+          <tbody id="adminProductsTbody"><tr><td colspan="6"><div class="spinner-inline"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- product modal -->
+<div class="modal" id="productModal">
+  <div class="modal-card wide plate">
+    <button class="modal-close" onclick="closeProductModal()">✕</button>
+    <h3 style="font-size:1.15rem;margin-bottom:18px;" id="productModalTitle">Add product</h3>
+    <form id="productForm">
+      <input type="hidden" id="prodId">
+      <div class="field-group">
+        <label for="prodName">Product name</label>
+        <input class="field" id="prodName" required>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="field-group">
+          <label for="prodCategory">Category</label>
+          <select class="filter" id="prodCategory" style="width:100%;"></select>
+        </div>
+        <div class="field-group">
+          <label for="prodNewCategory">Or new category</label>
+          <input class="field" id="prodNewCategory" placeholder="Optional">
+        </div>
+      </div>
+      <div class="field-group">
+        <label for="prodDesc">Description</label>
+        <textarea class="field" id="prodDesc" rows="3" required></textarea>
+      </div>
+      <div class="field-group">
+        <label for="prodPrice">Price (JD)</label>
+        <input class="field" id="prodPrice" type="number" min="0" step="0.01" required style="max-width:160px;">
+      </div>
+      <div class="field-group">
+        <label>Colors</label>
+        <div class="colors-picker">
+          <input class="field" id="colorName" placeholder="Color name" style="flex:1;">
+          <input type="color" id="colorHex" value="#ff6a3d" style="width:40px;height:38px;border:1px solid var(--line-strong);background:none;padding:2px;">
+          <button type="button" class="btn small ghost" onclick="addColorChip()">Add</button>
+        </div>
+        <div class="upload-preview" id="colorChips" style="margin-top:8px;"></div>
+      </div>
+      <div class="field-group">
+        <label>Images</label>
+        <div class="upload-box" onclick="document.getElementById('prodImgInput').click()">Click to add product images</div>
+        <input type="file" id="prodImgInput" accept="image/*" multiple class="hide">
+        <div class="upload-preview" id="prodImgPreview"></div>
+      </div>
+      <button type="submit" class="btn accent block" id="saveProductBtn">Save product</button>
+    </form>
+  </div>
+</div>
+
+<!-- lightbox -->
+<div class="modal" id="lightbox" onclick="closeLightbox()">
+  <div style="max-width:640px;margin:auto;padding:20px;"><img id="lightboxImg" style="border:1px solid var(--line);"></div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>
