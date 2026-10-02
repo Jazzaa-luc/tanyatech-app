@@ -1,10 +1,11 @@
+const { UPLOADS_DIR } = require('./paths');
 const multer = require('multer');
 const path = require('path');
 const { v4: uuid } = require('uuid');
 
 function makeUploader(subfolder) {
   const storage = multer.diskStorage({
-    destination: path.join(__dirname, '..', 'uploads', subfolder),
+destination: path.join(UPLOADS_DIR, subfolder),
     filename: (req, file, cb) => {
       const ext = path.extname(file.originalname || '').toLowerCase() || '.jpg';
       cb(null, uuid() + ext);
