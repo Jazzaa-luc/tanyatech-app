@@ -7,7 +7,8 @@ const fs = require('fs');
 const path = require('path');
 const { v4: uuid } = require('uuid');
 
-const DB_FILE = path.join(__dirname, '..', 'data', 'db.json');
+const { DATA_DIR } = require('./paths');
+const DB_FILE = path.join(DATA_DIR, 'db.json');
 
 function seedData() {
   const categories = ['Miniatures & Figurines', 'Home & Decor', 'Functional Parts', 'Custom Prototypes'];
