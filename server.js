@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
+const { UPLOADS_DIR } = require('./src/paths');
 
 const productsRoutes = require('./src/routes/products');
 const ordersRoutes = require('./src/routes/orders');
@@ -23,8 +24,7 @@ app.use(session({
 
 // static files: frontend + uploaded images
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
+app.use('/uploads', express.static(UPLOADS_DIR));
 // public, non-secret config the frontend needs
 app.get('/api/config', (req, res) => {
   res.json({
