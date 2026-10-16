@@ -37,6 +37,7 @@
         <button class="admin-tab active" data-tab="orders" onclick="switchAdminTab('orders')">Orders <span class="badge hide" id="ordersBadge">0</span></button>
         <button class="admin-tab" data-tab="custom" onclick="switchAdminTab('custom')">Custom requests <span class="badge hide" id="customBadge">0</span></button>
         <button class="admin-tab" data-tab="products" onclick="switchAdminTab('products')">Products</button>
+        <button class="admin-tab" data-tab="promos" onclick="switchAdminTab('promos')">Promo codes</button>
       </div>
       <div class="bar-right">
         <button class="icon-btn theme-toggle" id="themeBtn" title="Toggle theme"></button>
@@ -75,6 +76,35 @@
         <table class="admin-table">
           <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Colors</th><th>Price</th><th></th></tr></thead>
           <tbody id="adminProductsTbody"><tr><td colspan="6"><div class="spinner-inline"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PROMO CODES -->
+    <div class="admin-panel" id="panelPromos">
+      <div class="section-head"><h2 style="font-size:1.3rem;">Promo codes</h2></div>
+      <form class="plate promo-form" id="promoForm" onsubmit="createPromo(event)">
+        <div class="field-group"><label for="promoCode">Code</label>
+          <input class="field" id="promoCode" placeholder="e.g. WELCOME10" maxlength="20" required style="text-transform:uppercase;"></div>
+        <div class="field-group"><label for="promoType">Type</label>
+          <select class="filter" id="promoType" style="width:100%;" onchange="updatePromoValueLabel()">
+            <option value="percent">Percent off (%)</option>
+            <option value="fixed">Fixed amount (JD)</option>
+          </select></div>
+        <div class="field-group"><label for="promoValue" id="promoValueLabel">Percent off</label>
+          <input class="field" id="promoValue" type="number" min="0.01" step="0.01" required></div>
+        <div class="field-group"><label for="promoMin">Min order (JD)</label>
+          <input class="field" id="promoMin" type="number" min="0" step="0.01" placeholder="Optional"></div>
+        <div class="field-group"><label for="promoMax">Max uses</label>
+          <input class="field" id="promoMax" type="number" min="1" step="1" placeholder="Unlimited"></div>
+        <div class="field-group"><label for="promoExpiry">Expires on</label>
+          <input class="field" id="promoExpiry" type="date"></div>
+        <button type="submit" class="btn accent" id="promoCreateBtn">+ Add code</button>
+      </form>
+      <div class="plate" style="overflow-x:auto;">
+        <table class="admin-table">
+          <thead><tr><th>Code</th><th>Discount</th><th>Min order</th><th>Used</th><th>Expires</th><th>Status</th><th></th></tr></thead>
+          <tbody id="promosTbody"><tr><td colspan="7"><div class="spinner-inline"></div></td></tr></tbody>
         </table>
       </div>
     </div>

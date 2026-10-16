@@ -167,7 +167,16 @@
   </div>
   <div class="drawer-body" id="cartBody"></div>
   <div class="drawer-foot">
+    <div class="promo-box" id="promoBox">
+      <div class="promo-row">
+        <input class="field" id="promoInput" placeholder="Promo code" autocomplete="off" autocapitalize="characters" onkeydown="if(event.key==='Enter')applyPromo()">
+        <button class="btn small outline" id="promoApplyBtn" onclick="applyPromo()">Apply</button>
+      </div>
+      <div class="promo-msg hide" id="promoMsg"></div>
+    </div>
     <div class="subtotal-row"><span>Subtotal</span><span class="mono" id="cartSubtotal">0.00 JD</span></div>
+    <div class="subtotal-row discount-row hide" id="discountRow"><span id="discountLabel">Discount</span><span class="mono" id="cartDiscount">-0.00 JD</span></div>
+    <div class="subtotal-row total-row hide" id="totalRow"><span>Total</span><span class="mono" id="cartTotal">0.00 JD</span></div>
     <div class="min-note hide" id="minOrderNote"></div>
     <button class="btn accent block" id="checkoutBtn" onclick="openCheckout()">Checkout</button>
   </div>

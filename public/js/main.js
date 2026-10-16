@@ -7,6 +7,7 @@ let config = { cliqAlias: 'TANYATECH3D', minOrderJD: 10 };
 let cart = [];
 let svcImageFile = null;
 let invoiceImageFile = null;
+let appliedPromo = null; // { code, discount, total } once a code is accepted
 
 /* ---------- helpers ---------- */
 function fmtJD(n) { return (Math.round(n * 100) / 100).toFixed(2) + ' JD'; }
@@ -151,6 +152,7 @@ function addToCart(productId) {
   saveCart();
   toast(p.name + ' added to cart');
   openCart();
+  revalidatePromo();
 }
 function renderCart() {
   const body = document.getElementById('cartBody');
@@ -178,18 +180,96 @@ function renderCart() {
   }
   const sub = cartSubtotal();
   document.getElementById('cartSubtotal').textContent = fmtJD(sub);
+  renderPromoTotals();
   const belowMin = sub > 0 && sub < config.minOrderJD;
   const note = document.getElementById('minOrderNote');
   note.classList.toggle('hide', !belowMin);
   if (belowMin) note.textContent = `Minimum order is ${config.minOrderJD.toFixed(2)} JD — add ${fmtJD(config.minOrderJD - sub)} more.`;
   document.getElementById('checkoutBtn').disabled = cart.length === 0 || sub < config.minOrderJD;
 }
+/* ---------- promo codes ---------- */
+function cartItemsPayload() {
+  return cart.map(item => ({ productId: item.productId, color: item.color, qty: item.qty }));
+}
+// Amount the customer actually pays (after any applied promo).
+function cartTotal() {
+  return appliedPromo ? Math.max(0, cartSubtotal() - appliedPromo.discount) : cartSubtotal();
+}
+function renderPromoTotals() {
+  const has = !!appliedPromo;
+  document.getElementById('discountRow').classList.toggle('hide', !has);
+  document.getElementById('totalRow').classList.toggle('hide', !has);
+  if (has) {
+    document.getElementById('discountLabel').textContent = 'Promo ' + appliedPromo.code;
+    document.getElementById('cartDiscount').textContent = '-' + fmtJD(appliedPromo.discount);
+    document.getElementById('cartTotal').textContent = fmtJD(cartTotal());
+  }
+}
+function setPromoMsg(text, ok) {
+  const el = document.getElementById('promoMsg');
+  el.textContent = text || '';
+  el.classList.toggle('hide', !text);
+  el.classList.toggle('ok', !!ok);
+}
+async function applyPromo() {
+  if (appliedPromo) { removePromo(); return; }
+  const code = document.getElementById('promoInput').value.trim();
+  if (!code) { setPromoMsg('Enter a promo code', false); return; }
+  const btn = document.getElementById('promoApplyBtn');
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/promo/validate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, items: cartItemsPayload() })
+    });
+    const data = await res.json();
+    if (!res.ok) { setPromoMsg(data.error || 'Could not apply code', false); return; }
+    appliedPromo = { code: data.code, discount: data.discount };
+    syncPromoUi();
+    setPromoMsg('Code ' + data.code + ' applied — you save ' + fmtJD(data.discount), true);
+    renderCart();
+  } catch (e) {
+    setPromoMsg('Network error — please try again', false);
+  } finally {
+    btn.disabled = false;
+  }
+}
+function removePromo() {
+  appliedPromo = null;
+  document.getElementById('promoInput').value = '';
+  syncPromoUi();
+  setPromoMsg('', false);
+  renderCart();
+}
+function syncPromoUi() {
+  const input = document.getElementById('promoInput');
+  input.disabled = !!appliedPromo;
+  if (appliedPromo) input.value = appliedPromo.code;
+  document.getElementById('promoApplyBtn').textContent = appliedPromo ? 'Remove' : 'Apply';
+}
+// The cart changed, so a previously accepted discount may no longer be right: re-check it quietly.
+async function revalidatePromo() {
+  if (!appliedPromo) return;
+  if (!cart.length) { removePromo(); return; }
+  try {
+    const res = await fetch('/api/promo/validate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: appliedPromo.code, items: cartItemsPayload() })
+    });
+    const data = await res.json();
+    if (!res.ok) { removePromo(); setPromoMsg(data.error, false); return; }
+    appliedPromo = { code: data.code, discount: data.discount };
+    setPromoMsg('Code ' + data.code + ' applied — you save ' + fmtJD(data.discount), true);
+    renderCart();
+  } catch (e) { /* keep showing the last known discount; the server re-checks at order time */ }
+}
+
 function changeQty(idx, delta) {
   cart[idx].qty += delta;
   if (cart[idx].qty <= 0) cart.splice(idx, 1);
-  saveCart(); renderCart();
+  saveCart(); renderCart(); revalidatePromo();
 }
-function removeFromCart(idx) { cart.splice(idx, 1); saveCart(); renderCart(); }
+function removeFromCart(idx) { cart.splice(idx, 1); saveCart(); renderCart(); revalidatePromo(); }
 function openCart() {
   renderCart();
   document.getElementById('cartDrawer').classList.add('show');
@@ -213,7 +293,7 @@ function goCheckoutStep(n) {
   if (n === 2) {
     const phone = document.getElementById('orderPhone').value.trim();
     if (!phone) { goCheckoutStep(1); return; }
-    document.getElementById('payAmount').textContent = fmtJD(cartSubtotal());
+    document.getElementById('payAmount').textContent = fmtJD(cartTotal());
   }
 }
 
@@ -238,13 +318,14 @@ function clearInvoiceImage() {
 async function placeOrder() {
   if (!invoiceImageFile) return;
   const phone = document.getElementById('orderPhone').value.trim();
-  const items = cart.map(item => ({ productId: item.productId, color: item.color, qty: item.qty }));
+  const items = cartItemsPayload();
   const btn = document.getElementById('placeOrderBtn');
   setBtnLoading(btn, true);
 
   const fd = new FormData();
   fd.append('phone', phone);
   fd.append('items', JSON.stringify(items));
+  if (appliedPromo) fd.append('promoCode', appliedPromo.code);
   fd.append('invoiceImage', invoiceImageFile);
 
   try {
@@ -254,6 +335,7 @@ async function placeOrder() {
 
     cart = [];
     saveCart();
+    removePromo();
     document.getElementById('confirmOrderId').textContent = data.order.id;
     goCheckoutStep(4);
     window.open(data.whatsapp, '_blank');
