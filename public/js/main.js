@@ -120,7 +120,7 @@ function renderProducts() {
   initReveal();
 }
 function placeholderFor(p) {
-  const hex = (p.colors[0] && p.colors[0].hex) || '#55608A';
+  const hex = (p.colors[0] && p.colors[0].hex) || '#2860C0';
   const label = p.name.slice(0, 12).toUpperCase();
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect width="300" height="300" fill="${hex}"/><polygon points="150,60 225,100 225,200 150,240 75,200 75,100" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="3"/><text x="150" y="272" font-family="monospace" font-size="15" fill="rgba(255,255,255,.85)" text-anchor="middle">${label}</text></svg>`;
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
