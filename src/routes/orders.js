@@ -7,6 +7,7 @@ const { evaluatePromo } = require('./promos');
 
 const uploadInvoice = makeUploader('invoices');
 const MIN_ORDER_JD = parseFloat(process.env.MIN_ORDER_JD || '10');
+const FREE_DELIVERY_JD = parseFloat(process.env.FREE_DELIVERY_JD || '30');
 
 // ---- public: place an order ----
 router.post('/orders', uploadInvoice.single('invoiceImage'), (req, res) => {
@@ -55,6 +56,8 @@ router.post('/orders', uploadInvoice.single('invoiceImage'), (req, res) => {
     promoCode,
     discount,
     total: Math.round((subtotal - discount) * 100) / 100,
+    // free delivery is judged on what the customer actually pays (after any promo code)
+    freeDelivery: Math.round((subtotal - discount) * 100) / 100 >= FREE_DELIVERY_JD,
     invoiceImage: `/uploads/invoices/${req.file.filename}`,
     status: 'pending',
     createdAt: new Date().toISOString()
@@ -74,7 +77,8 @@ function buildOrderWhatsAppLink(order) {
   const adminNumber = (process.env.ADMIN_WHATSAPP || '').replace(/[^0-9]/g, '');
   const lines = order.items.map(i => `- ${i.qty}x ${i.name}${i.color ? ' (' + i.color + ')' : ''} - ${(i.price * i.qty).toFixed(2)} JD`).join('\n');
   const promoLine = order.discount > 0 ? `\nPromo ${order.promoCode}: -${order.discount.toFixed(2)} JD` : '';
-  const text = `New order ${order.id}\n${lines}${promoLine}\nTotal: ${order.total.toFixed(2)} JD\nCustomer phone: ${order.phone}\nPayment: CliQ transfer completed, screenshot saved with the order.`;
+  const deliveryLine = order.freeDelivery ? '\nDelivery: Free' : '';
+  const text = `New order ${order.id}\n${lines}${promoLine}${deliveryLine}\nTotal: ${order.total.toFixed(2)} JD\nCustomer phone: ${order.phone}\nPayment: CliQ transfer completed, screenshot saved with the order.`;
   return `https://wa.me/${adminNumber}?text=${encodeURIComponent(text)}`;
 }
 

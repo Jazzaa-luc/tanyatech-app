@@ -115,6 +115,22 @@ const I18N = {
     'srv.minOrder': 'Minimum order is {min}',
     'srv.promoMin': 'This code needs an order of at least {min}',
 
+    'nav.policy': 'Policy',
+    'hero.delivery': 'Free delivery on orders of {min} or more',
+    'policy.kicker': 'POLICIES',
+    'policy.title': 'Delivery & returns',
+    'policy.sub': 'Please read this before you order.',
+    'policy.delTitle': 'Delivery',
+    'policy.delBody': 'Delivery is free for orders of {min} or more. The amount that counts is your total after any promo code.',
+    'policy.retTitle': 'Refunds',
+    'policy.retBody': 'Products are non-refundable, with two exceptions: the product is damaged from our side, or it does not match the requirements you asked for.',
+    'policy.repTitle': 'Replacements',
+    'policy.repBody': "Didn't like your product? You can replace it. Message us on WhatsApp and we will arrange it.",
+    'footer.policy': 'Delivery & returns policy',
+    'cart.deliveryLabel': 'Delivery',
+    'cart.deliveryFree': 'Free',
+    'cart.deliveryNote': 'Add {more} more to get free delivery.',
+    'co.agree': 'By placing your order you agree to our <a href="#policy" onclick="goPolicy(event)">delivery & returns policy</a>: products are non-refundable unless damaged from our side or not as you requested, and you can replace a product you did not like.',
     'cur': 'JD'
   },
 
@@ -230,6 +246,22 @@ const I18N = {
     'srv.minOrder': 'الحد الأدنى للطلب {min}',
     'srv.promoMin': 'هذا الرمز يتطلب طلباً لا يقل عن {min}',
 
+    'nav.policy': 'السياسات',
+    'hero.delivery': 'توصيل مجاني للطلبات {min} فأكثر',
+    'policy.kicker': 'السياسات',
+    'policy.title': 'التوصيل والاسترجاع',
+    'policy.sub': 'يرجى قراءتها قبل إتمام الطلب.',
+    'policy.delTitle': 'التوصيل',
+    'policy.delBody': 'التوصيل مجاني للطلبات التي قيمتها {min} فأكثر. المبلغ المعتمد هو إجمالي طلبك بعد أي رمز خصم.',
+    'policy.retTitle': 'الاسترجاع',
+    'policy.retBody': 'المنتجات غير قابلة للاسترجاع، إلا في حالتين: أن يكون المنتج تالفاً من طرفنا، أو أن يكون غير مطابق للمواصفات التي طلبتها.',
+    'policy.repTitle': 'الاستبدال',
+    'policy.repBody': 'لم يعجبك المنتج؟ يمكنك استبداله. راسلنا عبر واتساب وسنرتّب ذلك.',
+    'footer.policy': 'سياسة التوصيل والاسترجاع',
+    'cart.deliveryLabel': 'التوصيل',
+    'cart.deliveryFree': 'مجاني',
+    'cart.deliveryNote': 'أضف {more} للحصول على توصيل مجاني.',
+    'co.agree': 'بإتمام طلبك فإنك توافق على <a href="#policy" onclick="goPolicy(event)">سياسة التوصيل والاسترجاع</a>: المنتجات غير قابلة للاسترجاع إلا إذا كانت تالفة من طرفنا أو غير مطابقة لما طلبته، ويمكنك استبدال المنتج الذي لم يعجبك.',
     'cur': 'د.أ'
   }
 };
