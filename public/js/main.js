@@ -10,7 +10,7 @@ let invoiceImageFile = null;
 let appliedPromo = null; // { code, discount, total } once a code is accepted
 
 /* ---------- helpers ---------- */
-function fmtJD(n) { return (Math.round(n * 100) / 100).toFixed(2) + ' JD'; }
+function fmtJD(n) { return fmtMoney(n); } // from i18n.js: JD in English, د.أ in Arabic
 function escHtml(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function toast(msg) {
   const wrap = document.getElementById('toastWrap');
@@ -73,19 +73,27 @@ function initReveal() {
 async function loadConfig() {
   try {
     config = await (await fetch('/api/config')).json();
-    document.getElementById('cliqAliasDisplay').textContent = config.cliqAlias;
-    document.getElementById('minOrderStat').querySelector('.n').textContent = config.minOrderJD.toFixed(0) + ' JD';
   } catch (e) { /* keep defaults */ }
+  renderConfigUi();
+}
+function renderConfigUi() {
+  document.getElementById('cliqAliasDisplay').textContent = config.cliqAlias;
+  document.getElementById('minOrderStat').querySelector('.n').textContent = config.minOrderJD.toFixed(0) + ' ' + t('cur');
 }
 async function loadCategories() {
   categories = await (await fetch('/api/categories')).json();
+  renderCategoryUi();
+  document.getElementById('categoryFilter').addEventListener('change', renderProducts);
+}
+function renderCategoryUi() {
   const panel = document.getElementById('catDropdown');
   const sel = document.getElementById('categoryFilter');
-  panel.innerHTML = `<button class="navdrop-item" onclick="filterAndGo('all')">All products</button>` +
+  const keep = sel.value || 'all';
+  panel.innerHTML = `<button class="navdrop-item" onclick="filterAndGo('all')">${t('prod.allProducts')}</button>` +
     categories.map(c => `<button class="navdrop-item" onclick="filterAndGo('${escHtml(c)}')">${escHtml(c)}</button>`).join('');
-  sel.innerHTML = `<option value="all">All categories</option>` +
+  sel.innerHTML = `<option value="all">${t('prod.allCats')}</option>` +
     categories.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
-  sel.addEventListener('change', renderProducts);
+  sel.value = keep;
 }
 async function loadProducts() {
   products = await (await fetch('/api/products')).json();
@@ -102,7 +110,7 @@ function renderProducts() {
   const grid = document.getElementById('productGrid');
   const list = products.filter(p => cat === 'all' || p.category === cat);
   if (!list.length) {
-    grid.innerHTML = `<div class="empty-note" style="grid-column:1/-1;">No products in this category yet.</div>`;
+    grid.innerHTML = `<div class="empty-note" style="grid-column:1/-1;">${t('prod.empty')}</div>`;
     return;
   }
   grid.innerHTML = list.map(p => `
@@ -114,7 +122,7 @@ function renderProducts() {
       <div class="swatches">${p.colors.map(c => `<span class="swatch" style="background:${c.hex}" title="${escHtml(c.name)}"></span>`).join('')}</div>
       <div class="pcard-foot">
         <span class="price">${fmtJD(p.price)}</span>
-        <button class="btn small accent" onclick="addToCart('${p.id}')">Add to cart</button>
+        <button class="btn small accent" onclick="addToCart('${p.id}')">${t('prod.add')}</button>
       </div>
     </div>
   `).join('');
@@ -150,14 +158,14 @@ function addToCart(productId) {
   if (existing) existing.qty += 1;
   else cart.push({ productId, color, qty: 1 });
   saveCart();
-  toast(p.name + ' added to cart');
+  toast(t('prod.added', { name: p.name }));
   openCart();
   revalidatePromo();
 }
 function renderCart() {
   const body = document.getElementById('cartBody');
   if (!cart.length) {
-    body.innerHTML = `<div class="empty-note">Your cart is empty. Browse products to add something.</div>`;
+    body.innerHTML = `<div class="empty-note">${t('cart.empty')}</div>`;
   } else {
     body.innerHTML = cart.map((item, idx) => {
       const p = products.find(x => x.id === item.productId);
@@ -172,7 +180,7 @@ function renderCart() {
               <button onclick="changeQty(${idx}, -1)">−</button>
               <span class="n">${item.qty}</span>
               <button onclick="changeQty(${idx}, 1)">+</button>
-              <button class="rm-line" onclick="removeFromCart(${idx})">Remove</button>
+              <button class="rm-line" onclick="removeFromCart(${idx})">${t('cart.remove')}</button>
             </div>
           </div>
         </div>`;
@@ -184,7 +192,7 @@ function renderCart() {
   const belowMin = sub > 0 && sub < config.minOrderJD;
   const note = document.getElementById('minOrderNote');
   note.classList.toggle('hide', !belowMin);
-  if (belowMin) note.textContent = `Minimum order is ${config.minOrderJD.toFixed(2)} JD — add ${fmtJD(config.minOrderJD - sub)} more.`;
+  if (belowMin) note.textContent = t('cart.minNote', { min: fmtJD(config.minOrderJD), more: fmtJD(config.minOrderJD - sub) });
   document.getElementById('checkoutBtn').disabled = cart.length === 0 || sub < config.minOrderJD;
 }
 /* ---------- promo codes ---------- */
@@ -200,21 +208,32 @@ function renderPromoTotals() {
   document.getElementById('discountRow').classList.toggle('hide', !has);
   document.getElementById('totalRow').classList.toggle('hide', !has);
   if (has) {
-    document.getElementById('discountLabel').textContent = 'Promo ' + appliedPromo.code;
-    document.getElementById('cartDiscount').textContent = '-' + fmtJD(appliedPromo.discount);
+    document.getElementById('discountLabel').textContent = t('cart.promoLabel', { code: appliedPromo.code });
+    document.getElementById('cartDiscount').textContent = fmtMoney(appliedPromo.discount, '-');
     document.getElementById('cartTotal').textContent = fmtJD(cartTotal());
   }
 }
-function setPromoMsg(text, ok) {
-  const el = document.getElementById('promoMsg');
-  el.textContent = text || '';
-  el.classList.toggle('hide', !text);
-  el.classList.toggle('ok', !!ok);
+// The message is remembered as a key (not finished text) so it can be re-translated when the language changes.
+let promoMsgState = null; // { key, vars, ok } | { raw, ok } | null
+function setPromoMsg(spec, ok) {
+  promoMsgState = spec ? Object.assign({ ok: !!ok }, spec) : null;
+  renderPromoMsg();
 }
+function renderPromoMsg() {
+  const el = document.getElementById('promoMsg');
+  const st = promoMsgState;
+  // vars may hold functions so money is formatted in the current language at draw time
+  const vars = st && st.vars ? Object.fromEntries(Object.entries(st.vars).map(([k, v]) => [k, typeof v === 'function' ? v() : v])) : null;
+  const text = !st ? '' : (st.key ? t(st.key, vars) : st.raw);
+  el.textContent = text;
+  el.classList.toggle('hide', !text);
+  el.classList.toggle('ok', !!(st && st.ok));
+}
+function promoApplied(data) { return { key: 'promo.applied', vars: { code: data.code, amount: () => fmtJD(data.discount) } }; }
 async function applyPromo() {
   if (appliedPromo) { removePromo(); return; }
   const code = document.getElementById('promoInput').value.trim();
-  if (!code) { setPromoMsg('Enter a promo code', false); return; }
+  if (!code) { setPromoMsg({ key: 'promo.enter' }, false); return; }
   const btn = document.getElementById('promoApplyBtn');
   btn.disabled = true;
   try {
@@ -223,13 +242,13 @@ async function applyPromo() {
       body: JSON.stringify({ code, items: cartItemsPayload() })
     });
     const data = await res.json();
-    if (!res.ok) { setPromoMsg(data.error || 'Could not apply code', false); return; }
+    if (!res.ok) { setPromoMsg({ raw: tServer(data.error, 'promo.fail') }, false); return; }
     appliedPromo = { code: data.code, discount: data.discount };
     syncPromoUi();
-    setPromoMsg('Code ' + data.code + ' applied — you save ' + fmtJD(data.discount), true);
+    setPromoMsg(promoApplied(data), true);
     renderCart();
   } catch (e) {
-    setPromoMsg('Network error — please try again', false);
+    setPromoMsg({ key: 'err.network' }, false);
   } finally {
     btn.disabled = false;
   }
@@ -238,14 +257,14 @@ function removePromo() {
   appliedPromo = null;
   document.getElementById('promoInput').value = '';
   syncPromoUi();
-  setPromoMsg('', false);
+  setPromoMsg(null);
   renderCart();
 }
 function syncPromoUi() {
   const input = document.getElementById('promoInput');
   input.disabled = !!appliedPromo;
   if (appliedPromo) input.value = appliedPromo.code;
-  document.getElementById('promoApplyBtn').textContent = appliedPromo ? 'Remove' : 'Apply';
+  document.getElementById('promoApplyBtn').textContent = appliedPromo ? t('cart.removePromo') : t('cart.apply');
 }
 // The cart changed, so a previously accepted discount may no longer be right: re-check it quietly.
 async function revalidatePromo() {
@@ -257,9 +276,9 @@ async function revalidatePromo() {
       body: JSON.stringify({ code: appliedPromo.code, items: cartItemsPayload() })
     });
     const data = await res.json();
-    if (!res.ok) { removePromo(); setPromoMsg(data.error, false); return; }
+    if (!res.ok) { removePromo(); setPromoMsg({ raw: tServer(data.error, 'promo.fail') }, false); return; }
     appliedPromo = { code: data.code, discount: data.discount };
-    setPromoMsg('Code ' + data.code + ' applied — you save ' + fmtJD(data.discount), true);
+    setPromoMsg(promoApplied(data), true);
     renderCart();
   } catch (e) { /* keep showing the last known discount; the server re-checks at order time */ }
 }
@@ -315,6 +334,14 @@ function clearInvoiceImage() {
   document.getElementById('placeOrderBtn').disabled = true;
 }
 
+let lastOrderId = '';
+function renderConfirmBody() {
+  const el = document.getElementById('confirmBody');
+  if (!el || !lastOrderId) return;
+  // order id is wrapped so it stays left-to-right inside Arabic text
+  const html = t('co.sentBody', { id: '@@ID@@' });
+  el.innerHTML = escHtml(html).replace('@@ID@@', `<span class="mono" dir="ltr">${escHtml(lastOrderId)}</span>`);
+}
 async function placeOrder() {
   if (!invoiceImageFile) return;
   const phone = document.getElementById('orderPhone').value.trim();
@@ -331,20 +358,21 @@ async function placeOrder() {
   try {
     const res = await fetch('/api/orders', { method: 'POST', body: fd });
     const data = await res.json();
-    if (!res.ok) { toast(data.error || 'Could not place order'); setBtnLoading(btn, false, 'Place order'); return; }
+    if (!res.ok) { toast(tServer(data.error, 'co.fail')); setBtnLoading(btn, false, t('co.place')); return; }
 
     cart = [];
     saveCart();
     removePromo();
-    document.getElementById('confirmOrderId').textContent = data.order.id;
+    lastOrderId = data.order.id;
+    renderConfirmBody();
     goCheckoutStep(4);
     window.open(data.whatsapp, '_blank');
     document.getElementById('orderPhone').value = '';
     clearInvoiceImage();
   } catch (e) {
-    toast('Network error — please try again');
+    toast(t('err.network'));
   } finally {
-    setBtnLoading(btn, false, 'Place order');
+    setBtnLoading(btn, false, t('co.place'));
   }
 }
 
@@ -380,15 +408,15 @@ document.getElementById('customForm').addEventListener('submit', async (e) => {
   try {
     const res = await fetch('/api/custom-requests', { method: 'POST', body: fd });
     const data = await res.json();
-    if (!res.ok) { toast(data.error || 'Could not send request'); return; }
-    toast('Request sent — opening WhatsApp');
+    if (!res.ok) { toast(tServer(data.error, 'err.sendFail')); return; }
+    toast(t('svc.sent'));
     window.open(data.whatsapp, '_blank');
     document.getElementById('customForm').reset();
     clearSvcImage();
   } catch (err) {
-    toast('Network error — please try again');
+    toast(t('err.network'));
   } finally {
-    setBtnLoading(btn, false, 'Send request');
+    setBtnLoading(btn, false, t('svc.send'));
   }
 });
 
@@ -426,7 +454,24 @@ function initSky() {
   }, { passive: true });
 }
 
+// Called by i18n.js after the language is switched: redraw everything that was built from JavaScript.
+function onLangChange() {
+  renderConfigUi();
+  renderCategoryUi();
+  renderProducts();
+  renderCart();
+  syncPromoUi();
+  renderPromoMsg();
+  renderConfirmBody();
+  renderLangBtn();
+}
+function renderLangBtn() {
+  const b = document.getElementById('langBtn');
+  if (b) b.classList.toggle('is-ar', currentLang === 'ar');
+}
+
 async function init() {
+  applyI18n();
   initSky();
   const savedTheme = localStorage.getItem('tanyatech_theme');
   if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
