@@ -96,6 +96,7 @@ function switchAdminTab(tab) {
   document.getElementById('panelOrders').classList.toggle('active', tab === 'orders');
   document.getElementById('panelCustom').classList.toggle('active', tab === 'custom');
   document.getElementById('panelProducts').classList.toggle('active', tab === 'products');
+  document.getElementById('panelPromos').classList.toggle('active', tab === 'promos');
 }
 
 /* ---------- orders ---------- */
@@ -130,6 +131,7 @@ function renderAdminOrders() {
       <div class="order-foot">
         <div>
           <span class="price">${fmtJD(o.total)}</span>
+          ${o.discount > 0 ? `<span class="mono" style="font-size:.78rem;margin-left:8px;color:var(--accent-2);">(${escHtml(o.promoCode)}: -${fmtJD(o.discount)})</span>` : ''}
           ${o.invoiceImage ? `<button class="shot-link" onclick="showLightbox('${o.invoiceImage}')" style="margin-left:12px;">View payment screenshot</button>` : ''}
         </div>
         <div class="admin-actions">
@@ -360,12 +362,96 @@ function closeLightbox(e) {
   document.getElementById('lightbox').classList.remove('show');
 }
 
+/* ---------- promo codes ---------- */
+let allPromos = [];
+async function loadPromos() {
+  const res = await fetch('/api/admin/promos');
+  if (!res.ok) return;
+  allPromos = await res.json();
+  renderPromos();
+}
+function updatePromoValueLabel() {
+  const pct = document.getElementById('promoType').value === 'percent';
+  document.getElementById('promoValueLabel').textContent = pct ? 'Percent off' : 'Amount off (JD)';
+  const v = document.getElementById('promoValue');
+  v.max = pct ? 100 : '';
+}
+function renderPromos() {
+  const tbody = document.getElementById('promosTbody');
+  if (!allPromos.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-note">No promo codes yet — add your first one above.</div></td></tr>`;
+    return;
+  }
+  const now = Date.now();
+  tbody.innerHTML = allPromos.map(p => {
+    const expired = p.expiresAt && new Date(p.expiresAt).getTime() < now;
+    const used = p.maxUses ? `${p.uses} / ${p.maxUses}` : `${p.uses}`;
+    const exhausted = p.maxUses && p.uses >= p.maxUses;
+    const state = !p.active ? ['inactive', 'Off'] : expired ? ['rejected', 'Expired'] : exhausted ? ['rejected', 'Used up'] : ['approved', 'Active'];
+    return `
+      <tr>
+        <td class="mono" style="font-weight:600;">${escHtml(p.code)}</td>
+        <td>${p.type === 'percent' ? p.value + '% off' : fmtJD(p.value) + ' off'}</td>
+        <td>${p.minOrder ? fmtJD(p.minOrder) : '—'}</td>
+        <td class="mono">${used}</td>
+        <td>${p.expiresAt ? new Date(p.expiresAt).toLocaleDateString() : 'Never'}</td>
+        <td><span class="badge-status ${state[0]}">${state[1]}</span></td>
+        <td>
+          <div class="admin-actions">
+            <button class="btn small ghost" onclick="togglePromo('${p.id}', ${!p.active})">${p.active ? 'Turn off' : 'Turn on'}</button>
+            <button class="btn small danger-o" onclick="deletePromo('${p.id}')">Delete</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+async function createPromo(e) {
+  e.preventDefault();
+  const btn = document.getElementById('promoCreateBtn');
+  setBtnLoading(btn, true);
+  const body = {
+    code: document.getElementById('promoCode').value,
+    type: document.getElementById('promoType').value,
+    value: document.getElementById('promoValue').value,
+    minOrder: document.getElementById('promoMin').value,
+    maxUses: document.getElementById('promoMax').value,
+    expiresAt: document.getElementById('promoExpiry').value
+  };
+  try {
+    const res = await fetch('/api/admin/promos', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Could not add code'); return; }
+    toast('Promo code ' + data.code + ' added');
+    document.getElementById('promoForm').reset();
+    updatePromoValueLabel();
+    loadPromos();
+  } catch (err) {
+    toast('Network error — please try again');
+  } finally {
+    setBtnLoading(btn, false, '+ Add code');
+  }
+}
+async function togglePromo(id, active) {
+  const res = await fetch('/api/admin/promos/' + id, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active })
+  });
+  if (res.ok) { toast(active ? 'Code turned on' : 'Code turned off'); loadPromos(); }
+}
+async function deletePromo(id) {
+  if (!confirm('Delete this promo code? This cannot be undone.')) return;
+  const res = await fetch('/api/admin/promos/' + id, { method: 'DELETE' });
+  if (res.ok) { toast('Promo code deleted'); loadPromos(); }
+}
+
 /* ---------- boot ---------- */
 async function boot() {
   await loadCategories();
   await loadProducts();
   await loadOrders();
   await loadCustomRequests();
+  await loadPromos();
 }
 
 const savedTheme = localStorage.getItem('tanyatech_theme');

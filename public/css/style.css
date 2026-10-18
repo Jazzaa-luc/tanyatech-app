@@ -332,3 +332,15 @@ table.admin-table td { padding: 10px; border-bottom: 1px solid var(--line); vert
   .hero { padding: 40px 0 44px; }
   .grid-products { grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 12px; }
 }
+
+/* ---------- promo codes ---------- */
+.promo-box { margin-bottom: 12px; }
+.promo-row { display: flex; gap: 8px; }
+.promo-row .field { flex: 1; min-width: 0; text-transform: uppercase; }
+.promo-msg { font-size: .78rem; margin-top: 6px; color: var(--danger); }
+.promo-msg.ok { color: var(--accent-2); }
+.discount-row { color: var(--accent-2); }
+.total-row { font-weight: 700; }
+.promo-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end; padding: 16px; margin-bottom: 18px; }
+.promo-form .field-group { margin: 0; }
+.badge-status.inactive { background: var(--surface-2); color: var(--ink-soft); }

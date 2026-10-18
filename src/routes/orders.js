@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
 const { makeUploader } = require('../upload');
+const { evaluatePromo } = require('./promos');
 
 const uploadInvoice = makeUploader('invoices');
 const MIN_ORDER_JD = parseFloat(process.env.MIN_ORDER_JD || '10');
@@ -33,16 +34,33 @@ router.post('/orders', uploadInvoice.single('invoiceImage'), (req, res) => {
   if (!resolvedItems.length) return res.status(400).json({ error: 'Cart items are no longer available' });
   if (total < MIN_ORDER_JD) return res.status(400).json({ error: `Minimum order is ${MIN_ORDER_JD.toFixed(2)} JD` });
 
+  // Optional promo code, re-checked here so the discount can't be faked from the browser.
+  const subtotal = Math.round(total * 100) / 100;
+  let discount = 0;
+  let promoCode = null;
+  let appliedPromo = null;
+  if (req.body.promoCode && String(req.body.promoCode).trim()) {
+    const result = evaluatePromo(state, req.body.promoCode, subtotal);
+    if (result.error) return res.status(400).json({ error: result.error });
+    appliedPromo = result.promo;
+    promoCode = result.promo.code;
+    discount = result.discount;
+  }
+
   const order = {
     id: 'ORD-' + db.uuid().slice(0, 6).toUpperCase(),
     phone: phone.trim(),
     items: resolvedItems,
-    total: Math.round(total * 100) / 100,
+    subtotal,
+    promoCode,
+    discount,
+    total: Math.round((subtotal - discount) * 100) / 100,
     invoiceImage: `/uploads/invoices/${req.file.filename}`,
     status: 'pending',
     createdAt: new Date().toISOString()
   };
 
+  if (appliedPromo) appliedPromo.uses = (appliedPromo.uses || 0) + 1;
   state.orders.unshift(order);
   db.persist();
 
@@ -55,7 +73,8 @@ router.post('/orders', uploadInvoice.single('invoiceImage'), (req, res) => {
 function buildOrderWhatsAppLink(order) {
   const adminNumber = (process.env.ADMIN_WHATSAPP || '').replace(/[^0-9]/g, '');
   const lines = order.items.map(i => `- ${i.qty}x ${i.name}${i.color ? ' (' + i.color + ')' : ''} - ${(i.price * i.qty).toFixed(2)} JD`).join('\n');
-  const text = `New order ${order.id}\n${lines}\nTotal: ${order.total.toFixed(2)} JD\nCustomer phone: ${order.phone}\nPayment: CliQ transfer completed, screenshot saved with the order.`;
+  const promoLine = order.discount > 0 ? `\nPromo ${order.promoCode}: -${order.discount.toFixed(2)} JD` : '';
+  const text = `New order ${order.id}\n${lines}${promoLine}\nTotal: ${order.total.toFixed(2)} JD\nCustomer phone: ${order.phone}\nPayment: CliQ transfer completed, screenshot saved with the order.`;
   return `https://wa.me/${adminNumber}?text=${encodeURIComponent(text)}`;
 }
 

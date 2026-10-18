@@ -75,6 +75,7 @@ function load() {
   if (!cache.products) cache.products = [];
   if (!cache.orders) cache.orders = [];
   if (!cache.customRequests) cache.customRequests = [];
+  if (!cache.promoCodes) cache.promoCodes = [];
   return cache;
 }
 

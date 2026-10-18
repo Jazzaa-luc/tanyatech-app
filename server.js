@@ -8,6 +8,7 @@ const productsRoutes = require('./src/routes/products');
 const ordersRoutes = require('./src/routes/orders');
 const customRequestsRoutes = require('./src/routes/customRequests');
 const adminRoutes = require('./src/routes/admin');
+const promosRoutes = require('./src/routes/promos');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +38,7 @@ app.use('/api', productsRoutes);
 app.use('/api', ordersRoutes);
 app.use('/api', customRequestsRoutes);
 app.use('/api', adminRoutes);
+app.use('/api', promosRoutes);
 
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
