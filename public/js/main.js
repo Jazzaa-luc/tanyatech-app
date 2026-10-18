@@ -396,7 +396,38 @@ document.getElementById('customForm').addEventListener('submit', async (e) => {
 document.getElementById('overlay').addEventListener('click', () => { closeCart(); closeCheckout(); });
 
 /* ---------- init ---------- */
+/* ---------- flying background ---------- */
+// Isometric cubes and the logo's "T" drift up the page, tumbling slowly.
+const SKY_CUBE = '<svg viewBox="0 0 100 100"><polygon class="ft" points="50,6 94,28 50,50 6,28"/><polygon class="fl" points="6,28 50,50 50,96 6,74"/><polygon class="fr" points="94,28 50,50 50,96 94,74"/></svg>';
+const SKY_WIRE = '<svg viewBox="0 0 100 100"><polygon class="fo" points="50,6 94,28 94,74 50,96 6,74 6,28"/><polyline class="fo" points="6,28 50,50 94,28"/><line class="fo" x1="50" y1="50" x2="50" y2="96"/></svg>';
+const SKY_T = '<svg viewBox="0 0 100 100"><polygon class="ft" points="8,34 62,20 92,34 38,48"/><polygon class="fl" points="8,34 38,48 38,60 8,46"/><polygon class="fr" points="38,48 92,34 92,46 38,60"/><polygon class="ft" points="34,56 56,48 56,86 34,94"/><polygon class="fr" points="56,48 70,54 70,92 56,86"/></svg>';
+function initSky() {
+  const layer = document.getElementById('skyLayer');
+  if (!layer) return;
+  const small = window.innerWidth < 700;
+  const count = small ? 9 : 18;
+  const shapes = [SKY_CUBE, SKY_CUBE, SKY_WIRE, SKY_T];
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  let html = '';
+  for (let i = 0; i < count; i++) {
+    const far = Math.random() < 0.45;              // far ones: small, faint, blurred, slow
+    const size = far ? rnd(22, 44) : rnd(48, 96);
+    const dur = far ? rnd(34, 52) : rnd(20, 32);
+    const shape = shapes[i % shapes.length];
+    html += `<div class="flyer${far ? ' blur' : ''}" style="--x:${rnd(-2, 96).toFixed(1)}%;--s:${size.toFixed(0)}px;--dur:${dur.toFixed(1)}s;--delay:${(-rnd(0, dur)).toFixed(1)}s;--drift:${rnd(-120, 120).toFixed(0)}px;--rot:${rnd(14, 55).toFixed(0)}deg;--spin:${rnd(5, 9).toFixed(1)}s;--o:${(far ? rnd(.18, .3) : rnd(.28, .45)).toFixed(2)};--still:${rnd(5, 90).toFixed(0)}%">${shape}</div>`;
+  }
+  layer.innerHTML = html;
+  // gentle parallax: the whole sky shifts a little as the page scrolls
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => { layer.style.transform = `translate3d(0, ${(-window.scrollY * 0.08).toFixed(1)}px, 0)`; ticking = false; });
+  }, { passive: true });
+}
+
 async function init() {
+  initSky();
   const savedTheme = localStorage.getItem('tanyatech_theme');
   if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
   renderThemeIcon();
