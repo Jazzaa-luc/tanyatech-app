@@ -131,6 +131,7 @@ function renderAdminOrders() {
       <div class="order-foot">
         <div>
           <span class="price">${fmtJD(o.total)}</span>
+          ${o.freeDelivery ? `<span class="badge-status approved" style="margin-left:8px;">Free delivery</span>` : ''}
           ${o.discount > 0 ? `<span class="mono" style="font-size:.78rem;margin-left:8px;color:var(--accent-2);">(${escHtml(o.promoCode)}: -${fmtJD(o.discount)})</span>` : ''}
           ${o.invoiceImage ? `<button class="shot-link" onclick="showLightbox('${o.invoiceImage}')" style="margin-left:12px;">View payment screenshot</button>` : ''}
         </div>

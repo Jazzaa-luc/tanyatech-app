@@ -30,7 +30,8 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 app.get('/api/config', (req, res) => {
   res.json({
     cliqAlias: process.env.CLIQ_ALIAS || 'TANYATECH3D',
-    minOrderJD: parseFloat(process.env.MIN_ORDER_JD || '10')
+    minOrderJD: parseFloat(process.env.MIN_ORDER_JD || '10'),
+    freeDeliveryJD: parseFloat(process.env.FREE_DELIVERY_JD || '30')
   });
 });
 

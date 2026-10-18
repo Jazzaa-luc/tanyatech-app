@@ -3,7 +3,7 @@
 const CART_KEY = 'tanyatech_cart_v1';
 let products = [];
 let categories = [];
-let config = { cliqAlias: 'TANYATECH3D', minOrderJD: 10 };
+let config = { cliqAlias: 'TANYATECH3D', minOrderJD: 10, freeDeliveryJD: 30 };
 let cart = [];
 let svcImageFile = null;
 let invoiceImageFile = null;
@@ -38,6 +38,12 @@ function goTo(id) {
   document.getElementById('mobileNavPanel').classList.add('hide');
   const el = document.getElementById(id);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+// "delivery & returns policy" links: close the checkout and cart, then scroll to the policy section
+function goPolicy(e) {
+  if (e) e.preventDefault();
+  closeCheckout(); closeCart();
+  goTo('policy');
 }
 function toggleMobileNav() {
   document.getElementById('mobileNavPanel').classList.toggle('hide');
@@ -79,6 +85,9 @@ async function loadConfig() {
 function renderConfigUi() {
   document.getElementById('cliqAliasDisplay').textContent = config.cliqAlias;
   document.getElementById('minOrderStat').querySelector('.n').textContent = config.minOrderJD.toFixed(0) + ' ' + t('cur');
+  const free = fmtJD(config.freeDeliveryJD);
+  document.getElementById('heroDeliveryText').textContent = t('hero.delivery', { min: free });
+  document.getElementById('policyDelivery').textContent = t('policy.delBody', { min: free });
 }
 async function loadCategories() {
   categories = await (await fetch('/api/categories')).json();
@@ -194,6 +203,15 @@ function renderCart() {
   note.classList.toggle('hide', !belowMin);
   if (belowMin) note.textContent = t('cart.minNote', { min: fmtJD(config.minOrderJD), more: fmtJD(config.minOrderJD - sub) });
   document.getElementById('checkoutBtn').disabled = cart.length === 0 || sub < config.minOrderJD;
+
+  // free delivery is judged on the amount actually paid (after any promo code)
+  const pay = cartTotal();
+  const hasItems = cart.length > 0 && sub > 0;
+  const isFree = hasItems && pay >= config.freeDeliveryJD;
+  document.getElementById('deliveryRow').classList.toggle('hide', !isFree);
+  const dn = document.getElementById('deliveryNote');
+  dn.classList.toggle('hide', !hasItems || isFree);
+  if (hasItems && !isFree) dn.textContent = t('cart.deliveryNote', { more: fmtJD(config.freeDeliveryJD - pay) });
 }
 /* ---------- promo codes ---------- */
 function cartItemsPayload() {

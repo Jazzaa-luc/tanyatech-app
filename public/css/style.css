@@ -436,3 +436,20 @@ html[dir="rtl"] .hint, html[dir="rtl"] .field-group label { text-align: start; }
   .bar-inner { gap: 6px; }
   .bar-right { gap: 4px; }
 }
+
+/* ---------- delivery & policy ---------- */
+.hero-badge { margin-top: 22px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: .84rem; font-weight: 600; color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 999px; opacity: 0; animation: fadeSlideUp .7s cubic-bezier(.2,.7,.2,1) .5s forwards; }
+.hero-badge svg { flex: none; }
+.delivery-row { color: var(--accent-2); }
+.delivery-note { color: var(--accent); }
+.policy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.policy-card { padding: 24px; }
+.policy-card h3 { font-size: 1.05rem; margin-bottom: 10px; background: var(--grad-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.policy-card p { font-size: .92rem; line-height: 1.65; color: var(--ink-soft); }
+.policy-agree { font-size: .76rem; line-height: 1.6; color: var(--ink-soft); margin: 4px 0 14px; }
+.policy-agree a { color: var(--accent); text-underline-offset: 3px; }
+footer .admin-entry { margin: 0 6px; }
+html[lang="ar"] .policy-card p { line-height: 1.9; }
+@media (max-width: 860px) { .policy-grid { grid-template-columns: 1fr; } }
+/* the "Remove" link in the cart must not inherit the small square +/- button look */
+.qty-ctrl .rm-line { width: auto; height: auto; border: none; background: none; font-size: .72rem; }
