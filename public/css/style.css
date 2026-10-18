@@ -3,44 +3,52 @@
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 
-  --bg: #F3EEE2;
+  /* Palette taken from the TanyaTech logo:
+     bright blue wordmark, royal/indigo cube, grey Arabic tagline */
+  --bg: #F7F7F7;
   --surface: #FFFFFF;
-  --surface-2: #EAE3D2;
-  --ink: #172441;
-  --ink-soft: #55608A;
-  --accent: #FF6A3D;
-  --accent-2: #1E8E82;
+  --surface-2: #E6EEF9;
+  --ink: #1F2358;
+  --ink-soft: #5A6078;
+  --accent: #2860C0;
+  --on-accent: #FFFFFF;
+  --accent-2: #2F3190;
+  --on-accent-2: #FFFFFF;
   --danger: #C4432B;
-  --line: rgba(23,36,65,.18);
-  --line-strong: rgba(23,36,65,.32);
-  --shadow: 0 1px 0 rgba(23,36,65,.06);
+  --line: rgba(31,35,88,.16);
+  --line-strong: rgba(31,35,88,.30);
+  --shadow: 0 1px 0 rgba(31,35,88,.06);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0D1A30;
-    --surface: #142643;
-    --surface-2: #1B2F50;
-    --ink: #EDF2F8;
-    --ink-soft: #A9BBD6;
-    --accent: #FF7C52;
-    --accent-2: #45DCC9;
+    --bg: #0B1230;
+    --surface: #121C45;
+    --surface-2: #1A2760;
+    --ink: #EAF1FF;
+    --ink-soft: #A9B8DD;
+    --accent: #2F80D8;
+    --on-accent: #FFFFFF;
+    --accent-2: #6FB3F2;
+    --on-accent-2: #08162F;
     --danger: #FF8368;
-    --line: rgba(237,242,248,.16);
-    --line-strong: rgba(237,242,248,.3);
+    --line: rgba(234,241,255,.16);
+    --line-strong: rgba(234,241,255,.30);
     --shadow: 0 1px 0 rgba(0,0,0,.3);
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0D1A30;
-  --surface: #142643;
-  --surface-2: #1B2F50;
-  --ink: #EDF2F8;
-  --ink-soft: #A9BBD6;
-  --accent: #FF7C52;
-  --accent-2: #45DCC9;
+  --bg: #0B1230;
+  --surface: #121C45;
+  --surface-2: #1A2760;
+  --ink: #EAF1FF;
+  --ink-soft: #A9B8DD;
+  --accent: #2F80D8;
+  --on-accent: #FFFFFF;
+  --accent-2: #6FB3F2;
+  --on-accent-2: #08162F;
   --danger: #FF8368;
-  --line: rgba(237,242,248,.16);
-  --line-strong: rgba(237,242,248,.3);
+  --line: rgba(234,241,255,.16);
+  --line-strong: rgba(234,241,255,.30);
   --shadow: 0 1px 0 rgba(0,0,0,.3);
 }
 html { scroll-padding-top: 84px; }
@@ -154,8 +162,8 @@ nav.primary { display: flex; align-items: center; gap: 4px; margin-left: 4px; }
 .btn:hover { transform: translateY(-1px); }
 .btn:active { transform: translateY(0); }
 .btn.outline { background: transparent; color: var(--ink); border-color: var(--line-strong); }
-.btn.accent { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn.teal { background: var(--accent-2); border-color: var(--accent-2); color: #08211f; }
+.btn.accent { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.teal { background: var(--accent-2); border-color: var(--accent-2); color: var(--on-accent-2); }
 .btn.block { width: 100%; justify-content: center; }
 .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 .btn.small { padding: 8px 14px; font-size: .82rem; }
@@ -186,7 +194,7 @@ select.filter, input.field, textarea.field {
 select.filter:focus, input.field:focus, textarea.field:focus { outline: 2px solid var(--accent-2); outline-offset: 1px; }
 .grid-products { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 18px; margin-top: 26px; }
 .pcard { padding: 14px; display: flex; flex-direction: column; gap: 10px; transition: transform .2s ease, box-shadow .2s ease; }
-.pcard:hover { transform: translateY(-4px); box-shadow: 0 14px 26px rgba(23,36,65,.14); }
+.pcard:hover { transform: translateY(-4px); box-shadow: 0 14px 26px rgba(31,35,88,.16); }
 .pcard .thumb { aspect-ratio: 1/1; background: var(--surface-2); overflow: hidden; border: 1px solid var(--line); }
 .pcard .thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
 .pcard:hover .thumb img { transform: scale(1.05); }
@@ -266,7 +274,7 @@ footer { padding: 26px 0 40px; text-align: center; }
 .pay-box .k { color: var(--ink-soft); }
 .pay-box .v { font-family: 'JetBrains Mono'; font-weight: 600; }
 .confirm-box { text-align: center; padding: 20px 4px; }
-.confirm-box .mark { width: 52px; height: 52px; border-radius: 50%; background: var(--accent-2); color: #08211f; display: grid; place-items: center; margin: 0 auto 16px; font-size: 1.4rem; animation: popIn .3s cubic-bezier(.3,1.4,.5,1); }
+.confirm-box .mark { width: 52px; height: 52px; border-radius: 50%; background: var(--accent-2); color: var(--on-accent-2); display: grid; place-items: center; margin: 0 auto 16px; font-size: 1.4rem; animation: popIn .3s cubic-bezier(.3,1.4,.5,1); }
 
 /* ---------- admin ---------- */
 #adminApp { min-height: 100vh; }
