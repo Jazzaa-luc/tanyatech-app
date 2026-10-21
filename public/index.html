@@ -27,6 +27,7 @@
         <button class="navlink" onclick="goTo('products')" data-i18n="nav.products">Products ▾</button>
         <div class="navdrop-panel" id="catDropdown"></div>
       </div>
+      <button class="navlink" onclick="goTo('coloring')" data-i18n="nav.coloring">Tanya Coloring</button>
       <button class="navlink" onclick="goTo('services')" data-i18n="nav.services">Services</button>
       <button class="navlink" onclick="goTo('about')" data-i18n="nav.about">About Us</button>
       <button class="navlink" onclick="goTo('policy')" data-i18n="nav.policy">Policy</button>
@@ -45,6 +46,7 @@
   </div>
   <div id="mobileNavPanel" class="hide" style="border-top:1px solid var(--line); padding:10px 22px 16px;">
     <button class="navlink" style="display:block;width:100%;text-align:start" onclick="goTo('products')" data-i18n="nav.productsPlain">Products</button>
+    <button class="navlink" style="display:block;width:100%;text-align:start" onclick="goTo('coloring')" data-i18n="nav.coloring">Tanya Coloring</button>
     <button class="navlink" style="display:block;width:100%;text-align:start" onclick="goTo('services')" data-i18n="nav.services">Services</button>
     <button class="navlink" style="display:block;width:100%;text-align:start" onclick="goTo('about')" data-i18n="nav.about">About Us</button>
     <button class="navlink" style="display:block;width:100%;text-align:start" onclick="goTo('policy')" data-i18n="nav.policy">Policy</button>
@@ -109,6 +111,18 @@
   </div>
 </section>
 
+<section id="coloring">
+  <div class="wrap">
+    <div class="coloring-head">
+      <div class="kicker mono" data-i18n="coloring.kicker">TANYA COLORING</div>
+      <h2 class="coloring-title" data-i18n="coloring.title">We design, you color</h2>
+      <div class="paint-dots" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+      <p class="section-sub" data-i18n="coloring.sub">Pick a design we made, then add the colors your own way.</p>
+    </div>
+    <div class="grid-products" id="coloringGrid"></div>
+  </div>
+</section>
+
 <section id="services">
   <div class="wrap svc-grid">
     <div>
@@ -155,7 +169,7 @@
         <div class="plate stat"><div class="n">±0.2mm</div><div class="l" data-i18n="about.tol">print tolerance</div></div>
         <div class="plate stat"><div class="n">24–72h</div><div class="l" data-i18n="about.turn">typical turnaround</div></div>
         <div class="plate stat"><div class="n">PLA / PETG</div><div class="l" data-i18n="about.resin">resin on request</div></div>
-        <div class="plate stat" id="minOrderStat"><div class="n">10 JD</div><div class="l" data-i18n="about.min">order minimum</div></div>
+        <div class="plate stat" id="minOrderStat"><div class="n">5 JD</div><div class="l" data-i18n="about.min">order minimum</div></div>
       </div>
     </div>
     <div class="plate" style="padding:26px;">

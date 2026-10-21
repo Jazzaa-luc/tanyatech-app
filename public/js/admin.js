@@ -213,14 +213,15 @@ async function loadProducts() {
 function renderAdminProducts() {
   const tbody = document.getElementById('adminProductsTbody');
   if (!products.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-note">No products yet — add your first one.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-note">No products yet — add your first one.</div></td></tr>`;
     return;
   }
   tbody.innerHTML = products.map(p => `
     <tr>
       <td><img class="prod-thumb-sm" src="${p.images[0] || ''}"></td>
       <td>${escHtml(p.name)}</td>
-      <td class="mono" style="font-size:.78rem;">${escHtml(p.category)}</td>
+      <td>${p.section === 'coloring' ? '<span class="badge-status approved">Tanya Coloring</span>' : '<span class="badge-status inactive">Shop</span>'}</td>
+      <td class="mono" style="font-size:.78rem;">${p.category ? escHtml(p.category) : '—'}</td>
       <td><div class="color-dot-row">${p.colors.map(c => `<span class="color-dot" style="background:${c.hex}" title="${escHtml(c.name)}"></span>`).join('')}</div></td>
       <td class="price">${fmtJD(p.price)}</td>
       <td>
@@ -242,7 +243,13 @@ function populateCategorySelect() {
   const sel = document.getElementById('prodCategory');
   sel.innerHTML = categories.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
 }
-function openProductModal(id) {
+// Shop categories only apply to shop products; Tanya Coloring products don't use them.
+function updateSectionFields() {
+  const coloring = document.getElementById('prodSection').value === 'coloring';
+  document.getElementById('categoryRow').classList.toggle('hide', coloring);
+  document.getElementById('prodCategory').required = !coloring;
+}
+function openProductModal(id, section) {
   editingProductId = id || null;
   populateCategorySelect();
   tempColors = [];
@@ -256,15 +263,20 @@ function openProductModal(id) {
     document.getElementById('productModalTitle').textContent = 'Edit product';
     document.getElementById('prodId').value = p.id;
     document.getElementById('prodName').value = p.name;
-    document.getElementById('prodCategory').value = p.category;
+    document.getElementById('prodNameAr').value = p.nameAr || '';
+    document.getElementById('prodDescAr').value = p.descriptionAr || '';
+    document.getElementById('prodSection').value = p.section === 'coloring' ? 'coloring' : 'shop';
+    if (p.category) document.getElementById('prodCategory').value = p.category;
     document.getElementById('prodDesc').value = p.description;
     document.getElementById('prodPrice').value = p.price;
     tempColors = p.colors.map(c => ({ ...c }));
     existingImages = [...p.images];
   } else {
-    document.getElementById('productModalTitle').textContent = 'Add product';
+    document.getElementById('productModalTitle').textContent = section === 'coloring' ? 'Add to Tanya Coloring' : 'Add product';
     document.getElementById('prodId').value = '';
+    document.getElementById('prodSection').value = section === 'coloring' ? 'coloring' : 'shop';
   }
+  updateSectionFields();
   renderColorChips();
   renderProdImgPreview();
   document.getElementById('productModal').classList.add('show');
@@ -327,9 +339,15 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
   setBtnLoading(btn, true);
 
   const fd = new FormData();
+  const section = document.getElementById('prodSection').value;
   fd.append('name', name);
-  fd.append('category', category);
-  fd.append('newCategory', newCategory);
+  fd.append('nameAr', document.getElementById('prodNameAr').value.trim());
+  fd.append('descriptionAr', document.getElementById('prodDescAr').value.trim());
+  fd.append('section', section);
+  if (section === 'shop') {
+    fd.append('category', category);
+    fd.append('newCategory', newCategory);
+  }
   fd.append('description', description);
   fd.append('price', price);
   fd.append('colors', JSON.stringify(tempColors));

@@ -70,12 +70,15 @@
     <div class="admin-panel" id="panelProducts">
       <div class="section-head">
         <h2 style="font-size:1.3rem;">Products</h2>
-        <button class="btn accent small" onclick="openProductModal()">+ Add product</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn accent small" onclick="openProductModal()">+ Add product</button>
+          <button class="btn outline small" onclick="openProductModal(null, 'coloring')">+ Add to Tanya Coloring</button>
+        </div>
       </div>
       <div class="plate" style="overflow-x:auto;">
         <table class="admin-table">
-          <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Colors</th><th>Price</th><th></th></tr></thead>
-          <tbody id="adminProductsTbody"><tr><td colspan="6"><div class="spinner-inline"></div></td></tr></tbody>
+          <thead><tr><th>Image</th><th>Name</th><th>Section</th><th>Category</th><th>Colors</th><th>Price</th><th></th></tr></thead>
+          <tbody id="adminProductsTbody"><tr><td colspan="7"><div class="spinner-inline"></div></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -123,7 +126,18 @@
         <label for="prodName">Product name</label>
         <input class="field" id="prodName" required>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="field-group">
+        <label for="prodNameAr">Arabic name (optional)</label>
+        <input class="field" id="prodNameAr" dir="rtl" placeholder="الاسم بالعربية">
+      </div>
+      <div class="field-group">
+        <label for="prodSection">Where should it appear?</label>
+        <select class="filter" id="prodSection" style="width:100%;" onchange="updateSectionFields()">
+          <option value="shop">Products shop</option>
+          <option value="coloring">Tanya Coloring</option>
+        </select>
+      </div>
+      <div id="categoryRow" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
         <div class="field-group">
           <label for="prodCategory">Category</label>
           <select class="filter" id="prodCategory" style="width:100%;"></select>
@@ -136,6 +150,10 @@
       <div class="field-group">
         <label for="prodDesc">Description</label>
         <textarea class="field" id="prodDesc" rows="3" required></textarea>
+      </div>
+      <div class="field-group">
+        <label for="prodDescAr">Arabic description (optional)</label>
+        <textarea class="field" id="prodDescAr" rows="3" dir="rtl" placeholder="الوصف بالعربية"></textarea>
       </div>
       <div class="field-group">
         <label for="prodPrice">Price (JD)</label>

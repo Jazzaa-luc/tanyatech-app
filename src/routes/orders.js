@@ -6,8 +6,7 @@ const { makeUploader } = require('../upload');
 const { evaluatePromo } = require('./promos');
 
 const uploadInvoice = makeUploader('invoices');
-const MIN_ORDER_JD = parseFloat(process.env.MIN_ORDER_JD || '10');
-const FREE_DELIVERY_JD = parseFloat(process.env.FREE_DELIVERY_JD || '30');
+const { MIN_ORDER_JD, FREE_DELIVERY_JD } = require('../settings');
 
 // ---- public: place an order ----
 router.post('/orders', uploadInvoice.single('invoiceImage'), (req, res) => {
