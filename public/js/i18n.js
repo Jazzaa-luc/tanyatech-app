@@ -131,6 +131,11 @@ const I18N = {
     'cart.deliveryFree': 'Free',
     'cart.deliveryNote': 'Add {more} more to get free delivery.',
     'co.agree': 'By placing your order you agree to our <a href="#policy" onclick="goPolicy(event)">delivery & returns policy</a>: products are non-refundable unless damaged from our side or not as you requested, and you can replace a product you did not like.',
+    'nav.coloring': 'Tanya Coloring',
+    'coloring.kicker': 'TANYA COLORING',
+    'coloring.title': 'We design, you color',
+    'coloring.sub': 'Pick a design we made, then add the colors your own way.',
+    'coloring.empty': 'New coloring designs are coming soon.',
     'cur': 'JD'
   },
 
@@ -262,6 +267,11 @@ const I18N = {
     'cart.deliveryFree': 'مجاني',
     'cart.deliveryNote': 'أضف {more} للحصول على توصيل مجاني.',
     'co.agree': 'بإتمام طلبك فإنك توافق على <a href="#policy" onclick="goPolicy(event)">سياسة التوصيل والاسترجاع</a>: المنتجات غير قابلة للاسترجاع إلا إذا كانت تالفة من طرفنا أو غير مطابقة لما طلبته، ويمكنك استبدال المنتج الذي لم يعجبك.',
+    'nav.coloring': 'تانيا للتلوين',
+    'coloring.kicker': 'تانيا للتلوين',
+    'coloring.title': 'نحن نصمّم وأنت تلوّن',
+    'coloring.sub': 'اختر تصميماً من إبداعنا ثم لوّنه بطريقتك.',
+    'coloring.empty': 'تصاميم تلوين جديدة قريباً.',
     'cur': 'د.أ'
   }
 };

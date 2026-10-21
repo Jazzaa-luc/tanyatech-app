@@ -7,9 +7,9 @@ the hand-off point for orders and custom print requests.
 ## What's included
 
 **Customer side** (`/`)
-- Navbar: Products (with a category dropdown), Services, About Us
+- Navbar: Products (with a category dropdown), Tanya Coloring, Services, About Us, Policy
 - Product catalog with categories, colors, images, add-to-cart — no account needed
-- Cart with a 10 JD order minimum (configurable)
+- Cart with a 5 JD order minimum and free delivery from 30 JD (both set in `src/settings.js`)
 - Checkout: phone number → CliQ payment instructions → upload a payment
   screenshot → order is saved and WhatsApp opens with the order details
 - Services page: custom print requests (phone, description, optional photo),

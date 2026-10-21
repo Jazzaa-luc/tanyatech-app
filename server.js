@@ -3,6 +3,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const { UPLOADS_DIR } = require('./src/paths');
+const { MIN_ORDER_JD, FREE_DELIVERY_JD } = require('./src/settings');
 
 const productsRoutes = require('./src/routes/products');
 const ordersRoutes = require('./src/routes/orders');
@@ -30,8 +31,8 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 app.get('/api/config', (req, res) => {
   res.json({
     cliqAlias: process.env.CLIQ_ALIAS || 'TANYATECH3D',
-    minOrderJD: parseFloat(process.env.MIN_ORDER_JD || '10'),
-    freeDeliveryJD: parseFloat(process.env.FREE_DELIVERY_JD || '30')
+    minOrderJD: MIN_ORDER_JD,
+    freeDeliveryJD: FREE_DELIVERY_JD
   });
 });
 

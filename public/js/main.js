@@ -3,7 +3,7 @@
 const CART_KEY = 'tanyatech_cart_v1';
 let products = [];
 let categories = [];
-let config = { cliqAlias: 'TANYATECH3D', minOrderJD: 10, freeDeliveryJD: 30 };
+let config = { cliqAlias: 'TANYATECH3D', minOrderJD: 5, freeDeliveryJD: 30 };
 let cart = [];
 let svcImageFile = null;
 let invoiceImageFile = null;
@@ -114,27 +114,46 @@ function filterAndGo(cat) {
   goTo('products');
 }
 
-function renderProducts() {
-  const cat = document.getElementById('categoryFilter').value;
-  const grid = document.getElementById('productGrid');
-  const list = products.filter(p => cat === 'all' || p.category === cat);
-  if (!list.length) {
-    grid.innerHTML = `<div class="empty-note" style="grid-column:1/-1;">${t('prod.empty')}</div>`;
-    return;
-  }
-  grid.innerHTML = list.map(p => `
+// Product names/descriptions: Arabic version when the shop is in Arabic and one was entered, otherwise the English one.
+function pName(p) { return (currentLang === 'ar' && p.nameAr) ? p.nameAr : p.name; }
+function pDesc(p) { return (currentLang === 'ar' && p.descriptionAr) ? p.descriptionAr : p.description; }
+const isColoring = p => p.section === 'coloring';
+
+function productCardHtml(p) {
+  return `
     <div class="plate pcard">
-      <div class="thumb"><img src="${p.images[0] || placeholderFor(p)}" alt="${escHtml(p.name)}" loading="lazy"></div>
-      <div class="cat mono">${escHtml(p.category)}</div>
-      <h3>${escHtml(p.name)}</h3>
-      <p class="desc">${escHtml(p.description)}</p>
-      <div class="swatches">${p.colors.map(c => `<span class="swatch" style="background:${c.hex}" title="${escHtml(c.name)}"></span>`).join('')}</div>
+      <div class="thumb"><img src="${p.images[0] || placeholderFor(p)}" alt="${escHtml(pName(p))}" loading="lazy"></div>
+      ${isColoring(p) ? '' : `<div class="cat mono">${escHtml(p.category)}</div>`}
+      <h3>${escHtml(pName(p))}</h3>
+      <p class="desc">${escHtml(pDesc(p))}</p>
+      ${p.colors.length ? `<div class="swatches">${p.colors.map(c => `<span class="swatch" style="background:${c.hex}" title="${escHtml(c.name)}"></span>`).join('')}</div>` : ''}
       <div class="pcard-foot">
         <span class="price">${fmtJD(p.price)}</span>
         <button class="btn small accent" onclick="addToCart('${p.id}')">${t('prod.add')}</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+}
+
+// "Tanya Coloring" section: only products the admin put in that section
+function renderColoring() {
+  const grid = document.getElementById('coloringGrid');
+  const list = products.filter(isColoring);
+  grid.innerHTML = list.length
+    ? list.map(productCardHtml).join('')
+    : `<div class="empty-note" style="grid-column:1/-1;">${t('coloring.empty')}</div>`;
+  initReveal();
+}
+
+function renderProducts() {
+  renderColoring();
+  const cat = document.getElementById('categoryFilter').value;
+  const grid = document.getElementById('productGrid');
+  const list = products.filter(p => !isColoring(p) && (cat === 'all' || p.category === cat));
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-note" style="grid-column:1/-1;">${t('prod.empty')}</div>`;
+    return;
+  }
+  grid.innerHTML = list.map(productCardHtml).join('');
   initReveal();
 }
 function placeholderFor(p) {
@@ -162,12 +181,12 @@ function cartSubtotal() {
 function addToCart(productId) {
   const p = products.find(x => x.id === productId);
   if (!p) return;
-  const color = p.colors[0] ? p.colors[0].name : null;
+  const color = (!isColoring(p) && p.colors[0]) ? p.colors[0].name : null;
   const existing = cart.find(c => c.productId === productId && c.color === color);
   if (existing) existing.qty += 1;
   else cart.push({ productId, color, qty: 1 });
   saveCart();
-  toast(t('prod.added', { name: p.name }));
+  toast(t('prod.added', { name: pName(p) }));
   openCart();
   revalidatePromo();
 }
@@ -183,7 +202,7 @@ function renderCart() {
         <div class="cart-row">
           <div class="thumb"><img src="${p.images[0] || placeholderFor(p)}"></div>
           <div class="info">
-            <h4>${escHtml(p.name)}</h4>
+            <h4>${escHtml(pName(p))}</h4>
             <div class="meta">${item.color ? escHtml(item.color) + ' · ' : ''}${fmtJD(p.price)}</div>
             <div class="qty-ctrl">
               <button onclick="changeQty(${idx}, -1)">−</button>
