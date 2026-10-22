@@ -465,7 +465,18 @@ async function deletePromo(id) {
 }
 
 /* ---------- boot ---------- */
+// Shows a warning if the server is not saving data permanently (no database connected).
+async function checkStorage() {
+  try {
+    const res = await fetch('/api/admin/storage');
+    if (!res.ok) return;
+    const s = await res.json();
+    document.getElementById('storageWarning').classList.toggle('hide', !!s.durable);
+  } catch (e) { /* not important enough to bother the admin */ }
+}
+
 async function boot() {
+  checkStorage();
   await loadCategories();
   await loadProducts();
   await loadOrders();

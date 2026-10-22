@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const db = require('../db');
+const { requireAdmin } = require('../middleware/auth');
 
 router.post('/admin/login', (req, res) => {
   const { password } = req.body;
@@ -16,6 +18,11 @@ router.post('/admin/logout', (req, res) => {
 
 router.get('/admin/session', (req, res) => {
   res.json({ isAdmin: !!(req.session && req.session.isAdmin) });
+});
+
+// Tells the admin dashboard whether orders/products are being saved permanently.
+router.get('/admin/storage', requireAdmin, (req, res) => {
+  res.json({ durable: db.isDurable, onEphemeralHost: db.onEphemeralHost, database: db.usingPostgres ? 'postgres' : 'local' });
 });
 
 module.exports = router;

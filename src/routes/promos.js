@@ -2,21 +2,18 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
+const { wrap, HttpError } = require('../http');
 
 const round2 = n => Math.round(n * 100) / 100;
 const normCode = c => String(c || '').trim().toUpperCase().replace(/\s+/g, '');
 
-function getPromos(state) {
-  if (!state.promoCodes) state.promoCodes = [];
-  return state.promoCodes;
-}
-
 // Checks a code against a subtotal. Returns { promo, discount } or { error }.
 // Shared by the "apply code" endpoint and by order placement so both agree.
-function evaluatePromo(state, rawCode, subtotal) {
+async function evaluatePromo(rawCode, subtotal, q = db.query) {
   const code = normCode(rawCode);
   if (!code) return { error: 'Enter a promo code' };
-  const promo = getPromos(state).find(p => p.code === code);
+  const r = await q('SELECT * FROM promo_codes WHERE code = $1', [code]);
+  const promo = r.rows[0] && db.mapPromo(r.rows[0]);
   if (!promo || !promo.active) return { error: 'This promo code is not valid' };
   if (promo.expiresAt && new Date(promo.expiresAt).getTime() < Date.now()) return { error: 'This promo code has expired' };
   if (promo.maxUses && promo.uses >= promo.maxUses) return { error: 'This promo code has reached its usage limit' };
@@ -28,21 +25,20 @@ function evaluatePromo(state, rawCode, subtotal) {
 }
 
 // ---- public: check a code against the cart ----
-router.post('/promo/validate', (req, res) => {
-  const state = db.load();
+router.post('/promo/validate', wrap(async (req, res) => {
   const { code, items } = req.body;
-  if (!Array.isArray(items) || !items.length) return res.status(400).json({ error: 'Your cart is empty' });
+  if (!Array.isArray(items) || !items.length) throw new HttpError(400, 'Your cart is empty');
 
+  const prices = new Map((await db.query('SELECT id, price FROM products')).rows.map(p => [p.id, Number(p.price)]));
   let subtotal = 0;
   for (const item of items) {
-    const product = state.products.find(p => p.id === item.productId);
-    if (!product) continue;
-    subtotal += product.price * Math.max(1, parseInt(item.qty, 10) || 1);
+    if (!prices.has(item.productId)) continue;
+    subtotal += prices.get(item.productId) * Math.max(1, parseInt(item.qty, 10) || 1);
   }
   subtotal = round2(subtotal);
 
-  const result = evaluatePromo(state, code, subtotal);
-  if (result.error) return res.status(400).json({ error: result.error });
+  const result = await evaluatePromo(code, subtotal);
+  if (result.error) throw new HttpError(400, result.error);
   res.json({
     code: result.promo.code,
     type: result.promo.type,
@@ -51,44 +47,40 @@ router.post('/promo/validate', (req, res) => {
     discount: result.discount,
     total: round2(subtotal - result.discount)
   });
-});
+}));
 
 // ---- admin: manage codes ----
-router.get('/admin/promos', requireAdmin, (req, res) => {
-  res.json(getPromos(db.load()));
-});
+router.get('/admin/promos', requireAdmin, wrap(async (req, res) => {
+  const r = await db.query('SELECT * FROM promo_codes ORDER BY created_at DESC, id');
+  res.json(r.rows.map(db.mapPromo));
+}));
 
-router.post('/admin/promos', requireAdmin, (req, res) => {
-  const state = db.load();
-  const promos = getPromos(state);
+router.post('/admin/promos', requireAdmin, wrap(async (req, res) => {
   const parsed = parsePromoBody(req.body);
-  if (parsed.error) return res.status(400).json({ error: parsed.error });
-  if (promos.some(p => p.code === parsed.data.code)) return res.status(400).json({ error: 'That code already exists' });
+  if (parsed.error) throw new HttpError(400, parsed.error);
+  const d = parsed.data;
+  const exists = await db.query('SELECT 1 FROM promo_codes WHERE code = $1', [d.code]);
+  if (exists.rows.length) throw new HttpError(400, 'That code already exists');
 
-  const promo = { id: db.uuid(), ...parsed.data, active: true, uses: 0, createdAt: new Date().toISOString() };
-  promos.unshift(promo);
-  db.persist();
-  res.status(201).json(promo);
-});
+  const r = await db.query(`INSERT INTO promo_codes (id, code, type, value, min_order, max_uses, expires_at)
+                            VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+    [db.uuid(), d.code, d.type, d.value, d.minOrder, d.maxUses, d.expiresAt]);
+  res.status(201).json(db.mapPromo(r.rows[0]));
+}));
 
-router.patch('/admin/promos/:id', requireAdmin, (req, res) => {
-  const state = db.load();
-  const promo = getPromos(state).find(p => p.id === req.params.id);
-  if (!promo) return res.status(404).json({ error: 'Promo code not found' });
-  if (typeof req.body.active === 'boolean') promo.active = req.body.active;
-  db.persist();
-  res.json(promo);
-});
+router.patch('/admin/promos/:id', requireAdmin, wrap(async (req, res) => {
+  const cur = await db.query('SELECT * FROM promo_codes WHERE id = $1', [req.params.id]);
+  if (!cur.rows.length) throw new HttpError(404, 'Promo code not found');
+  const active = typeof req.body.active === 'boolean' ? req.body.active : cur.rows[0].active;
+  const r = await db.query('UPDATE promo_codes SET active = $2 WHERE id = $1 RETURNING *', [req.params.id, active]);
+  res.json(db.mapPromo(r.rows[0]));
+}));
 
-router.delete('/admin/promos/:id', requireAdmin, (req, res) => {
-  const state = db.load();
-  const promos = getPromos(state);
-  const idx = promos.findIndex(p => p.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Promo code not found' });
-  promos.splice(idx, 1);
-  db.persist();
+router.delete('/admin/promos/:id', requireAdmin, wrap(async (req, res) => {
+  const r = await db.query('DELETE FROM promo_codes WHERE id = $1', [req.params.id]);
+  if (!r.rowCount && !(r.affectedRows)) throw new HttpError(404, 'Promo code not found');
   res.json({ ok: true });
-});
+}));
 
 function parsePromoBody(body) {
   const code = normCode(body.code);
