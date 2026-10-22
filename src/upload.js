@@ -1,25 +1,16 @@
-const { UPLOADS_DIR } = require('./paths');
 const multer = require('multer');
-const path = require('path');
-const { v4: uuid } = require('uuid');
+const { HttpError } = require('./http');
 
-function makeUploader(subfolder) {
-  const storage = multer.diskStorage({
-destination: path.join(UPLOADS_DIR, subfolder),
-    filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname || '').toLowerCase() || '.jpg';
-      cb(null, uuid() + ext);
-    }
-  });
-
+// Pictures are read into memory and then saved in the database (see db.saveFile), not on disk,
+// because the host's disk is wiped on every restart.
+function makeUploader() {
   const fileFilter = (req, file, cb) => {
     if (!file.mimetype.startsWith('image/')) {
-      return cb(new Error('Only image files are allowed'));
+      return cb(new HttpError(400, 'Only image files are allowed'));
     }
     cb(null, true);
   };
-
-  return multer({ storage, fileFilter, limits: { fileSize: 8 * 1024 * 1024 } });
+  return multer({ storage: multer.memoryStorage(), fileFilter, limits: { fileSize: 8 * 1024 * 1024 } });
 }
 
 module.exports = { makeUploader };

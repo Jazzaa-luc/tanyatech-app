@@ -47,6 +47,11 @@
   </div>
 
   <div class="admin-main wrap">
+    <div class="storage-warning hide" id="storageWarning" role="alert">
+      <strong>Your data is not being saved permanently.</strong>
+      On this server, orders, products and pictures are erased whenever it restarts. Connect a PostgreSQL database
+      (set <span class="mono">DATABASE_URL</span> — see the README) to keep them safe.
+    </div>
 
     <!-- ORDERS -->
     <div class="admin-panel active" id="panelOrders">

@@ -28,6 +28,7 @@ the hand-off point for orders and custom print requests.
 ## Requirements
 
 - Node.js 18 or newer
+- For a live site: a PostgreSQL database (see Database)
 
 ## Setup
 
@@ -53,10 +54,42 @@ npm start
 - Storefront: http://localhost:3000
 - Admin dashboard: http://localhost:3000/admin
 
-Product images, payment screenshots, and reference photos are saved to
-`uploads/`. Orders, custom requests, and the product catalog are saved to
-`data/db.json`, created automatically on first run with a few sample products
-you can edit or delete from the admin dashboard.
+Orders, custom requests, promo codes, the product catalog **and every uploaded
+picture** (products, payment screenshots, reference photos) are stored in a
+PostgreSQL database, set up automatically on first run with a few sample
+products you can edit or delete from the admin dashboard. See **Database**
+below.
+
+## Database
+
+Without any setup, `npm start` keeps a small local database in `data/pgdata/`,
+which is fine on your own computer.
+
+**On a live host that erases its files on every restart (Render's free plan
+does) you must connect an online PostgreSQL database**, otherwise orders,
+products and pictures are lost. Until you do, the admin dashboard shows a red
+"Your data is not being saved permanently" warning.
+
+Free option: [Neon](https://neon.com) (1 GB, no expiry). Do not use Render's own
+free Postgres: it expires after 30 days.
+
+1. Create a Neon account and a new project (pick the region closest to your
+   Render service).
+2. Open the project's **Connect** panel and copy the connection string. It
+   starts with `postgresql://` and ends with `?sslmode=require`.
+3. In Render: your service → **Environment** → add a variable named
+   `DATABASE_URL` with that string → save. Render redeploys by itself.
+4. Open `/admin`: the red warning should be gone. Add a test product, then
+   restart the service from Render: the product must still be there.
+
+The tables are created automatically. The very first start fills the database
+with the sample products (once only; deleted samples never come back). If an
+old `data/db.json` exists it is imported instead, together with its `uploads/`
+pictures.
+
+Good to know: pictures live in the database, so the 1 GB free limit is shared
+between data and pictures. Deleting a product or replacing its picture frees the
+space. To see how much is used, check the Neon dashboard.
 
 ## About the logo
 
@@ -76,8 +109,10 @@ stored with the order for you to review in the admin dashboard.
 
 ```
 server.js                 Express app entry point
-src/db.js                 JSON-file data store (data/db.json)
-src/upload.js             Multer file-upload configuration
+src/db.js                 PostgreSQL storage: tables, first-run data, pictures
+src/http.js               Async route helpers + friendly errors
+src/settings.js           Minimum order and free-delivery amounts
+src/upload.js             Multer file-upload configuration (pictures go to the database)
 src/middleware/auth.js    Admin session guard
 src/routes/               API routes (products, orders, custom requests, admin auth)
 public/index.html         Customer storefront
@@ -86,12 +121,5 @@ public/css/style.css      Shared styles + animations
 public/js/main.js         Storefront logic
 public/js/admin.js        Admin dashboard logic
 public/assets/logo.jpeg   Your logo
-uploads/                  Uploaded images (products, invoices, requests)
-data/db.json              Data (auto-created on first run)
+data/pgdata/              Local database used when DATABASE_URL is not set
 ```
-
-## Swapping in a real database later
-
-Everything reads and writes through the functions in `src/db.js`
-(`load()` / `persist()`). Swap that file for a real database client and the
-routes don't need to change.
